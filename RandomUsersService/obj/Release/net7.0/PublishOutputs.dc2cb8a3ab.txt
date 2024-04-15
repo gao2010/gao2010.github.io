@@ -1,7 +1,0 @@
-D:\Temp\RandomUsersService\obj\Docker\publish\RandomUsersService.exe
-D:\Temp\RandomUsersService\obj\Docker\publish\appsettings.Development.json
-D:\Temp\RandomUsersService\obj\Docker\publish\appsettings.json
-D:\Temp\RandomUsersService\obj\Docker\publish\RandomUsersService.dll
-D:\Temp\RandomUsersService\obj\Docker\publish\RandomUsersService.deps.json
-D:\Temp\RandomUsersService\obj\Docker\publish\RandomUsersService.runtimeconfig.json
-D:\Temp\RandomUsersService\obj\Docker\publish\RandomUsersService.pdb

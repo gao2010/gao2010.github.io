@@ -1,8 +1,0 @@
-{
-    "/test/*": {
-        "target": "https://localhost:7202/", 
-        "secure": false,
-        "changeOrigin": true,
-        "pathRewrite": { "^/test": "" }
-      }
-  }
