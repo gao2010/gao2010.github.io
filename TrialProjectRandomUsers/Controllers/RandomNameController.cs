@@ -6,14 +6,23 @@ using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+//using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using TrialProjectRandomUsers.Models;
 using System.IO;
+using Microsoft.AspNetCore.Cors;
+using Newtonsoft.Json.Linq;
+using Microsoft.AspNetCore.Components.Forms;
+using System.Text.Json;
+using System.Linq;
+//using System.Web.Http;
+using Microsoft.AspNetCore.Mvc;
+
 namespace TrialProjectRandomUsers.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [EnableCors("CorsPolicy")]
     public partial class RandomNameController : ControllerBase
     {
         private readonly StatisticsHelper Helper = new();
@@ -23,7 +32,7 @@ namespace TrialProjectRandomUsers.Controllers
         {
             HttpClient client = new() { };
             HttpResponseMessage response;
-            response = await client.GetAsync("https://randomuser.me/api/?results=10&nat=us&format=json");
+            response = await client.GetAsync("https://randomuser.me/api/?results=2&nat=us&format=json");
             response.EnsureSuccessStatusCode();
             string stringResult = await response.Content.ReadAsStringAsync();
             Person root = JsonConvert.DeserializeObject<Person>(stringResult);
@@ -37,7 +46,7 @@ namespace TrialProjectRandomUsers.Controllers
 
             try
             {
-                if (Request.Headers.TryGetValue("Accept", out var acceptedTypes))
+                if (Request.Headers.TryGetValue("accepts", out var acceptedTypes))
                 {
                     // Get the first accepted type (client might specify preferences)
                     var acceptValue = acceptedTypes.FirstOrDefault();
@@ -84,6 +93,48 @@ namespace TrialProjectRandomUsers.Controllers
             return Content(reportData, "text/plain", contentEncoding);
         }
         [HttpPost]
+        [Route("Api/DownloadReportUploadedJson")]
+        public IActionResult DownloadReportWithJsonRawFileAndReturnedFileType([FromBody] dynamic receivedData)
+        {
+            receivedData.TryGetProperty("inputText", out JsonElement fileTypeElement);
+            string fileType = fileTypeElement.GetString();
+            receivedData.TryGetProperty("jsonData", out JsonElement personElement);
+            Person root = JsonConvert.DeserializeObject<Person>(personElement.ToString());
+            // Generate report data (e.g., string, byte array)          
+            string data =  Helper.GetStatistics(root, fileType);
+            if (string.IsNullOrEmpty(data))
+            {
+                return BadRequest(error: "Please provide data to download");
+            }
+            // Create a MemoryStream to hold the data in memory
+            var memoryStream = new MemoryStream();
+            // Convert data to a byte array (assuming string data)
+            byte[] dataBytes = System.Text.Encoding.UTF8.GetBytes(data);
+
+            // Write the byte array to the MemoryStream
+            memoryStream.Write(dataBytes, 0, dataBytes.Length);
+            memoryStream.Seek(0, SeekOrigin.Begin); // Rewind the stream
+           
+            var fileName = "";
+            // Set response properties
+            if (fileType == "txt")
+            {               
+                fileName = "statistics.txt";
+            }
+            else if (fileType == "json")
+            {                
+                fileName = "statistics.json";
+            }
+            else
+            {
+                fileName = "statistics.xml";
+
+            }
+            return File(memoryStream, "application/octet-stream", fileName, true); // Set "true" for download
+           
+        }
+
+        [HttpPost]
         [Route("Api/DownloadReport")]
         public IActionResult DownloadReportWithUserInputs(Person root, string fileType)
         {
@@ -125,10 +176,13 @@ namespace TrialProjectRandomUsers.Controllers
         }
         [HttpPost]
         [Route("Api/BonusDownloadReport")]
-        public IActionResult DownloadReportAccordingToHeader(Person root)
+        public IActionResult DownloadReportAccordingToHeader([FromBody] dynamic receivedData, [FromHeader] dynamic hp)
         {
-            // Generate report data (e.g., string, byte array)
-            var fileType = ReceiveFormatFromRequest();
+
+            //string fileType = acceptElement.GetString();
+            string fileType = ReceiveFormatFromRequest();
+           // receivedData.TryGetProperty("jsonData", out JsonElement personElement);
+            Person root = JsonConvert.DeserializeObject<Person>(receivedData.ToString());
             string data = Helper.GetStatistics(root, fileType);
             if (string.IsNullOrEmpty(data))
             {
@@ -161,7 +215,7 @@ namespace TrialProjectRandomUsers.Controllers
                 fileName = "statistics.xml";
 
             }
-            return File(memoryStream, contentType, fileName, true); // Set "true" for download
+            return File(memoryStream, "application/octet-stream", fileName, true); // Set "true" for download
 
         }
     }
