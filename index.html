@@ -1,0 +1,16 @@
+<html><head><script type="text/javascript">
+    window.onload = function () {
+        var url = window.location.href;
+        if (url.indexOf("index.html") >= 0) {
+            url = url.replace("index.html", "");
+            redirectPage(url);
+        } else {
+            redirectPage(url);
+        }
+    };
+
+    function redirectPage(baseUrl) {
+        var url = baseUrl + "Home/Index";
+        window.location.href = url;
+    };
+</script></head></html>
